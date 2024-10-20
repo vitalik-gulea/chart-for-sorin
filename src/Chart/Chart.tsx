@@ -9,9 +9,9 @@ interface IChartProps {
   rows: number;
   columns: number;
   date: DateValue;
-  data: IChartLines[]
+  data: IChartLines[];
 }
-const Chart = ({ rows, columns, date ,data}: IChartProps) => {
+const Chart = ({ rows, columns, date, data }: IChartProps) => {
   const [height, setHeight] = useState(0);
   const [width, setWidth] = useState(0);
 

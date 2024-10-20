@@ -3,11 +3,12 @@ import { IChartLines } from "./ChartLines";
 import ChartConnectingLine from "./ChartConnectingLine";
 import { DateValue } from "@nextui-org/react";
 import { useEffect, useState } from "react";
+import { getLocalTimeZone, now } from "@internationalized/date";
+import { getLinePixels, getStartOfDayAndEndOfDay } from "../untils/utils";
 
 interface ILineProps {
   y: 1 | 2 | 3 | 4;
   x: number;
-  color: string;
   rows: number;
   height: number;
   nextEvent: IChartLines;
@@ -24,7 +25,6 @@ interface ILineProps {
 }
 const Line = ({
   rows,
-  color,
   y,
   height,
   x,
@@ -48,37 +48,61 @@ const Line = ({
     minutes: 0,
   });
   useEffect(() => {
+    const pickerDate = new Date(date.toDate("")).getTime();
+    const { startOfDaY, endOfDaY } = getStartOfDayAndEndOfDay(
+      now(getLocalTimeZone())
+    );
     if (nextEvent) {
-      const differenceInMillis = Math.abs(x - nextEvent.x);
-      const differenceInSeconds = Math.floor(differenceInMillis / 1000);
-      setDuration({
-        hours: Math.floor(differenceInSeconds / 3600),
-        minutes: Math.floor((differenceInSeconds % 3600) / 60),
-      });
-      setTimeRowsArray((prevState) => ({
-        ...prevState,
-        [y]: `${duration.hours}h ${duration.minutes}m`,
-      }));
-      const totalDurationInSeconds = 24 * 3600;
-      const lineWidth = (differenceInSeconds / totalDurationInSeconds) * width;
-      setLengthInPixels(lineWidth);
+      getLinePixels(
+        x,
+        nextEvent.x,
+        width,
+        y,
+        setDuration,
+        duration,
+        setTimeRowsArray,
+        setLengthInPixels
+      );
+    } else if (x >= startOfDaY && x <= endOfDaY) {
+      getLinePixels(
+        x,
+        pickerDate,
+        width,
+        y,
+        setDuration,
+        duration,
+        setTimeRowsArray,
+        setLengthInPixels
+      );
     } else {
-      const currentDate = new Date(date.toDate("")).getTime();
-      const differenceInMillis = Math.abs(x - currentDate);
-      const differenceInSeconds = Math.floor(differenceInMillis / 1000);
-      setDuration({
-        hours: Math.floor(differenceInSeconds / 3600),
-        minutes: Math.floor((differenceInSeconds % 3600) / 60),
-      });
-      setTimeRowsArray((prevState) => ({
-        ...prevState,
-        [y]: `${duration.hours}h ${duration.minutes}m`,
-      }));
-      const totalDurationInSeconds = 24 * 3600;
-      const lineWidth = (differenceInSeconds / totalDurationInSeconds) * width;
-      setLengthInPixels(lineWidth);
+      const { endOfDaY } = getStartOfDayAndEndOfDay(date);
+      getLinePixels(
+        x,
+        endOfDaY,
+        width,
+        y,
+        setDuration,
+        duration,
+        setTimeRowsArray,
+        setLengthInPixels
+      );
     }
-  }, [width, height]);
+  }, [width, height, x, date]);
+
+  useEffect(() => {
+    setTimeRowsArray({
+      1: "0",
+      2: "0",
+      3: "0",
+      4: "0",
+    });
+  }, [date]);
+  const color = {
+    1: "bg-red-500",
+    2: "bg-green-500",
+    3: "bg-yellow-500",
+    4: "bg-blue-500",
+  };
 
   return (
     <motion.div
@@ -110,7 +134,7 @@ const Line = ({
         animate={{
           y: (height / rows) * y - height / rows / 1.5,
         }}
-        className={`w-full h-[3px] ${color}  absolute`}
+        className={`w-full h-[3px] ${color[y]}  absolute`}
       />
       {nextEvent && nextEvent.y != y && (
         <ChartConnectingLine
@@ -118,7 +142,7 @@ const Line = ({
           height={height}
           rows={rows}
           y={y}
-          color={color}
+          color={color[y]}
         />
       )}
     </motion.div>

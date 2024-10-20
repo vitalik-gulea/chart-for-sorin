@@ -4,7 +4,6 @@ import Line from "./Line";
 export interface IChartLines {
   x: number;
   y: 1 | 2 | 3 | 4;
-  color: string;
 }
 
 interface IChartLinesProps {
@@ -45,7 +44,6 @@ const ChartLines = ({
             height={height}
             rows={rows}
             y={value.y}
-            color={value.color}
             key={index}
             x={value.x}
           />
